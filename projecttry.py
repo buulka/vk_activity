@@ -142,6 +142,8 @@ while td_data:
 table_print = table
 print(table_print)
 
+# TEST COMMIT
+
 print()
 print(Color.Cyan + "Итого: " + Color.END, coef)
 print()
