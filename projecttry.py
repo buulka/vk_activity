@@ -97,42 +97,46 @@ def get_messages_coef(bestfriends):
 
 sg.theme('LightGrey1')
 
-layout1 = [[sg.Text('Авторизация ВК')],
-           [sg.Text('Логин  '), sg.InputText()],
-           [sg.Text('Пароль'), sg.InputText(password_char='*')],
-           [sg.OK('Вход', size=(10, 1))]]
+layout1 = [[sg.Text('Авторизация ВК', pad=(55, 10), font=('Verdana', '15'))],
+           [sg.Text('Логин:  '), sg.InputText(size=(30, 1))],
+           [sg.Text('Пароль:'), sg.InputText(size=(30, 1), do_not_clear=False, password_char='*')],
+           [sg.OK('Вход', size=(10, 2), pad=(95, 30))]]
 
 window1 = sg.Window('Активность в ВК', layout1, size=(300, 200))
 
-layout2 = [[sg.Text('Группы: '), sg.Text(size=(15, 1), key='-GROUPS-')],
-           [sg.Text('Друзья: '), sg.Text(size=(15, 1), key='-FRIENDS-')],
-           [sg.Text('Фото: '), sg.Text(size=(15, 1), key='-PHOTOS-')],
-           [sg.Text('Посты: '), sg.Text(size=(15, 1), key='-POSTS-')],
-           [sg.Text('Закладки: '), sg.Text(size=(15, 1), key='-FAVES-')],
-           [sg.Text('Сообщения: '), sg.Text(size=(15, 1), key='-MESSAGES-')],
-           [sg.Text('Coefficient:'), sg.Text(size=(15, 1), key='-OUTPUT-')],
-           [sg.OK()]]
+layout2 = [[sg.Text('Баллы', pad=(100, 5), font=('Verdana', '15'))],
+           [sg.Text('Группы:', size=(11, 1)), sg.Text(size=(15, 1), key='-GROUPS-')],
+           [sg.Text('Друзья:', size=(11, 1)), sg.Text(size=(15, 1), key='-FRIENDS-')],
+           [sg.Text('Фото:', size=(11, 1)), sg.Text(size=(15, 1), key='-PHOTOS-')],
+           [sg.Text('Посты:', size=(11, 1)), sg.Text(size=(15, 1), key='-POSTS-')],
+           [sg.Text('Закладки:', size=(11, 1)), sg.Text(size=(15, 1), key='-FAVES-')],
+           [sg.Text('Сообщения:', size=(11, 1)), sg.Text(size=(15, 1), key='-MESSAGES-')],
+           [sg.Text()],
+           [sg.Text('Общий коэффициент активности: '), sg.Text(size=(15, 1), key='-OUTPUT-')],
+           [sg.Exit('Отправить результат на сервер', size=(20, 2), pad=(65, 30))]]
 
 while True:
-    event, values = window1.read(timeout=0)
+    event, values = window1.read()
     if event == 'Вход':
         print(values[0], values[1])
         success = True
         coef = 0
         vkapi = None
-
         try:
             login = values[0]
             password = values[1]
+            if login == '' or password == '':
+                raise AssertionError
+
             session = vk.AuthSession(app_id='2685278', user_login=login, user_password=password)
             vkapi = vk.API(session, v="5.103")
+
         except:
             success = False
             sg.popup_annoying('Введены неверные данные', non_blocking=False, background_color='lightgray')
-
         if success:
             window1.close()
-            window2 = sg.Window('Результат', layout2)
+            window2 = sg.Window('Результат', layout2, size=(300, 360))
             window2.Finalize()
 
             groups_count = vkapi.groups.get()['count']
@@ -160,6 +164,9 @@ while True:
             window2['-FAVES-'].update(faves_coef)
             window2.Refresh()
 
+            window2['-MESSAGES-'].update('Загрузка...')
+
+            window2.Refresh()
             bestfriends = vkapi.friends.get(order='hints', count='5')
             messages_coef = get_messages_coef(bestfriends)
             window2['-MESSAGES-'].update(messages_coef)
@@ -168,9 +175,13 @@ while True:
             coef = groups_coef + posts_coef + messages_coef + faves_coef + friends_coef + photos_coef
 
             window2['-OUTPUT-'].update(coef)
+
+            users_firstname = vkapi.account.getProfileInfo()['first_name']
+            users_lastname = vkapi.account.getProfileInfo()['last_name']
+            users_bdate = vkapi.account.getProfileInfo()['bdate']
             while True:
                 event, values = window2.read()
-                if event in ('OK', None):
+                if event in ('Отправить результат на сервер', None):
                     window2.close()
                     break
     if event is None:
