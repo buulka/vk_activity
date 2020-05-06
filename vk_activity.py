@@ -99,26 +99,26 @@ def get_messages_coef(bestfriends):
 
 sg.theme('LightGrey1')
 
-layout1 = [[sg.Text('Авторизация ВК', pad=(55, 10), font=('Verdana', '15'))],
-           [sg.Text('Логин:  '), sg.InputText(size=(30, 1))],
-           [sg.Text('Пароль:'), sg.InputText(size=(30, 1), do_not_clear=False, password_char='*')],
-           [sg.OK('Вход', size=(10, 2), pad=(95, 30))]]
+layout_auth = [[sg.Text('Авторизация ВК', pad=(55, 10), font=('Verdana', '15'))],
+               [sg.Text('Логин:  '), sg.InputText(size=(30, 1))],
+               [sg.Text('Пароль:'), sg.InputText(size=(30, 1), do_not_clear=False, password_char='*')],
+               [sg.OK('Вход', size=(10, 2), pad=(95, 30))]]
 
-window1 = sg.Window('Активность в ВК', layout1, size=(300, 200))
+window_auth = sg.Window('Активность в ВК', layout_auth, size=(300, 200))
 
-layout2 = [[sg.Text('Баллы', pad=(100, 5), font=('Verdana', '15'))],
-           [sg.Text('Группы:', size=(11, 1)), sg.Text(size=(15, 1), key='-GROUPS-')],
-           [sg.Text('Друзья:', size=(11, 1)), sg.Text(size=(15, 1), key='-FRIENDS-')],
-           [sg.Text('Фото:', size=(11, 1)), sg.Text(size=(15, 1), key='-PHOTOS-')],
-           [sg.Text('Посты:', size=(11, 1)), sg.Text(size=(15, 1), key='-POSTS-')],
-           [sg.Text('Закладки:', size=(11, 1)), sg.Text(size=(15, 1), key='-FAVES-')],
-           [sg.Text('Сообщения:', size=(11, 1)), sg.Text(size=(15, 1), key='-MESSAGES-')],
-           [sg.Text()],
-           [sg.Text('Общий коэффициент активности: '), sg.Text(size=(15, 1), key='-OUTPUT-')],
-           [sg.Submit('Отправить результат на сервер', size=(20, 2), pad=(65, 30), key='-SUBMIT-')]]
+layout_result = [[sg.Text('Баллы', pad=(100, 5), font=('Verdana', '15'))],
+                 [sg.Text('Группы:', size=(11, 1)), sg.Text(size=(15, 1), key='-GROUPS-')],
+                 [sg.Text('Друзья:', size=(11, 1)), sg.Text(size=(15, 1), key='-FRIENDS-')],
+                 [sg.Text('Фото:', size=(11, 1)), sg.Text(size=(15, 1), key='-PHOTOS-')],
+                 [sg.Text('Посты:', size=(11, 1)), sg.Text(size=(15, 1), key='-POSTS-')],
+                 [sg.Text('Закладки:', size=(11, 1)), sg.Text(size=(15, 1), key='-FAVES-')],
+                 [sg.Text('Сообщения:', size=(11, 1)), sg.Text(size=(15, 1), key='-MESSAGES-')],
+                 [sg.Text()],
+                 [sg.Text('Общий коэффициент активности: '), sg.Text(size=(15, 1), key='-OUTPUT-')],
+                 [sg.Submit('Отправить результат на сервер', size=(20, 2), pad=(65, 30), key='-SUBMIT-')]]
 
 while True:
-    event, values = window1.read()
+    event, values = window_auth.read()
     if event == 'Вход':
         success = True
         coef = 0
@@ -138,60 +138,60 @@ while True:
             sg.popup_annoying('Введены неверные данные', non_blocking=False, background_color='lightgray')
 
         if success:
-            window1.close()
+            window_auth.close()
 
-            window2 = sg.Window('Результат', layout2, size=(300, 360))
-            window2.Finalize()
+            window_result = sg.Window('Результат', layout_result, size=(300, 360))
+            window_result.Finalize()
 
-            window2['-SUBMIT-'].update(disabled=True)
-            window2.Refresh()
+            window_result['-SUBMIT-'].update(disabled=True)
+            window_result.Refresh()
 
             groups_count = vkapi.groups.get()['count']
             groups_coef = get_groups_coef(groups_count)
-            window2['-GROUPS-'].update(groups_coef)
-            window2.Refresh()
+            window_result['-GROUPS-'].update(groups_coef)
+            window_result.Refresh()
 
             friends_count = vkapi.friends.get(order='hints')['count']
             friends_coef = get_friends_coef(friends_count)
-            window2['-FRIENDS-'].update(friends_coef)
-            window2.Refresh()
+            window_result['-FRIENDS-'].update(friends_coef)
+            window_result.Refresh()
 
             photos_count = vkapi.photos.getAll()['count']
             photos_coef = get_photos_coef(photos_count)
-            window2['-PHOTOS-'].update(photos_coef)
-            window2.Refresh()
+            window_result['-PHOTOS-'].update(photos_coef)
+            window_result.Refresh()
 
             posts_count = vkapi.wall.get()['count']
             posts_coef = get_posts_coef(posts_count)
-            window2['-POSTS-'].update(posts_coef)
-            window2.Refresh()
+            window_result['-POSTS-'].update(posts_coef)
+            window_result.Refresh()
 
             faves_count = vkapi.fave.get()['count']
             faves_coef = get_faves_coef(faves_count)
-            window2['-FAVES-'].update(faves_coef)
-            window2.Refresh()
+            window_result['-FAVES-'].update(faves_coef)
+            window_result.Refresh()
 
-            window2['-MESSAGES-'].update('Загрузка...')
+            window_result['-MESSAGES-'].update('Загрузка...')
 
-            window2.Refresh()
+            window_result.Refresh()
             bestfriends = vkapi.friends.get(order='hints', count='5')
             messages_coef = get_messages_coef(bestfriends)
-            window2['-MESSAGES-'].update(messages_coef)
-            window2.Refresh()
+            window_result['-MESSAGES-'].update(messages_coef)
+            window_result.Refresh()
 
             coef = groups_coef + posts_coef + messages_coef + faves_coef + friends_coef + photos_coef
 
-            window2['-OUTPUT-'].update(coef)
+            window_result['-OUTPUT-'].update(coef)
 
-            window2['-SUBMIT-'].update(disabled=False)
-            window2.Refresh()
+            window_result['-SUBMIT-'].update(disabled=False)
+            window_result.Refresh()
 
             users_firstname = vkapi.account.getProfileInfo()['first_name']
             users_lastname = vkapi.account.getProfileInfo()['last_name']
             users_bdate = vkapi.account.getProfileInfo()['bdate']
 
             while True:
-                event, values = window2.read()
+                event, values = window_result.read()
                 if event == '-SUBMIT-':
                     try:
                         response = requests.post('https://sas.alpeconsulting.ru/vkactivity/data',
@@ -200,15 +200,15 @@ while True:
                                                        'date': users_bdate,
                                                        'activity': coef})
 
-                        window2['-SUBMIT-'].update(disabled=True)
-                        window2.Refresh()
+                        window_result['-SUBMIT-'].update(disabled=True)
+                        window_result.Refresh()
                     except:
                         sg.popup_annoying('Не удалось отправить данные', non_blocking=False,
                                           background_color='lightgray')
                 elif event is None:
-                    window2.close()
-                    exit()
+                    window_result.close()
+                    break
 
     if event is None:
-        window1.close()
+        window_auth.close()
         break
