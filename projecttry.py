@@ -2,6 +2,8 @@ import vk
 import time
 import datetime
 import PySimpleGUI as sg
+import requests
+
 
 def get_groups_coef(groups_count):
     if groups_count < 50:
@@ -113,15 +115,15 @@ layout2 = [[sg.Text('Баллы', pad=(100, 5), font=('Verdana', '15'))],
            [sg.Text('Сообщения:', size=(11, 1)), sg.Text(size=(15, 1), key='-MESSAGES-')],
            [sg.Text()],
            [sg.Text('Общий коэффициент активности: '), sg.Text(size=(15, 1), key='-OUTPUT-')],
-           [sg.Exit('Отправить результат на сервер', size=(20, 2), pad=(65, 30))]]
+           [sg.Submit('Отправить результат на сервер', size=(20, 2), pad=(65, 30), key='-SUBMIT-')]]
 
 while True:
     event, values = window1.read()
     if event == 'Вход':
-        print(values[0], values[1])
         success = True
         coef = 0
         vkapi = None
+
         try:
             login = values[0]
             password = values[1]
@@ -134,10 +136,15 @@ while True:
         except:
             success = False
             sg.popup_annoying('Введены неверные данные', non_blocking=False, background_color='lightgray')
+
         if success:
             window1.close()
+
             window2 = sg.Window('Результат', layout2, size=(300, 360))
             window2.Finalize()
+
+            window2['-SUBMIT-'].update(disabled=True)
+            window2.Refresh()
 
             groups_count = vkapi.groups.get()['count']
             groups_coef = get_groups_coef(groups_count)
@@ -176,14 +183,32 @@ while True:
 
             window2['-OUTPUT-'].update(coef)
 
+            window2['-SUBMIT-'].update(disabled=False)
+            window2.Refresh()
+
             users_firstname = vkapi.account.getProfileInfo()['first_name']
             users_lastname = vkapi.account.getProfileInfo()['last_name']
             users_bdate = vkapi.account.getProfileInfo()['bdate']
+
             while True:
                 event, values = window2.read()
-                if event in ('Отправить результат на сервер', None):
+                if event == '-SUBMIT-':
+                    try:
+                        response = requests.post('https://sas.alpeconsulting.ru/vkactivity/data',
+                                                 json={'name': users_firstname,
+                                                       'surname': users_lastname,
+                                                       'date': users_bdate,
+                                                       'activity': coef})
+
+                        window2['-SUBMIT-'].update(disabled=True)
+                        window2.Refresh()
+                    except:
+                        sg.popup_annoying('Не удалось отправить данные', non_blocking=False,
+                                          background_color='lightgray')
+                elif event is None:
                     window2.close()
-                    break
+                    exit()
+
     if event is None:
         window1.close()
         break
