@@ -1,17 +1,21 @@
 import requests
+import json
 
 url = 'https://sas.alpeconsulting.ru/vkactivity/data'
 
 
 def get(url):
     response = requests.get(url)
-    print(response.text)
+    for el in response.json():
+        print("id:", str(el['id']) + ";", el['name'], el['surname'] + ",", el['date'] + ";", "Активность:",
+              el['activity'])
 
 
 def get_id(url):
     input_id = input('Id: ')
-    response = requests.get(url + '/' + input_id)
-    print(response.text)
+    data = (requests.get(url + '/' + input_id)).json()
+    print("id:", str(data['id']) + ";", data['name'], data['surname'] + ",", data['date'] + ";", "Активность:",
+          data['activity'])
 
 
 def post(url):
@@ -20,7 +24,7 @@ def post(url):
         try:
             name = input('Имя: ')
             surname = input('Фамилия:')
-            bdate = input('Дата рождения (xx.yy.zz): ')
+            bdate = input('Дата рождения (xx.yy.zzzz): ')
             activity = int(input('Активность: '))
 
             requests.post(url,
